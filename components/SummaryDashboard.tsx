@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { TournamentData, CategoryKey, Team, Match, Group } from '../types';
 import { calculateGroupRanking } from '../utils/logic';
 import { Trophy, Crown, Zap, Heart, Users, Play, Pause, Maximize2, Medal, Clock, MapPin } from 'lucide-react';
+import { TournamentBracket } from './TournamentBracket';
 
 interface Props {
   data: TournamentData;
@@ -25,7 +26,6 @@ const DenseMatchRow: React.FC<{ match: Match, teams: Team[] }> = ({ match, teams
     const isFinished = match.isFinished;
     const scoreText = isFinished ? `${match.score.set1.a}-${match.score.set1.b}` : 'VS';
     
-    // Hiển thị đầy đủ Giờ + Ngày thi đấu
     const timeInfo = match.time || '--:-- --/--';
 
     const TeamInfo = ({ team, align }: { team: Team | undefined, align: 'right' | 'left' }) => (
@@ -34,7 +34,6 @@ const DenseMatchRow: React.FC<{ match: Match, teams: Team[] }> = ({ match, teams
                 <div className="truncate">{team?.name1}</div>
                 <div className="truncate">{team?.name2}</div>
             </div>
-            {/* Giữ nguyên dấu và không viết hoa toàn bộ để dễ đọc */}
             <div className="text-[7px] sm:text-[8px] text-slate-500 italic truncate leading-none mt-0.5">{team?.org}</div>
         </div>
     );
@@ -151,7 +150,7 @@ export const SummaryDashboard: React.FC<Props> = ({ data }) => {
                  <div className="w-px h-5 bg-gray-200 mx-2"></div>
                  <div className="flex bg-slate-100 p-0.5 rounded">
                      <button onClick={() => setStage('group')} className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${stage === 'group' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>Bảng Đấu</button>
-                     <button onClick={() => setStage('playoff')} className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${stage === 'playoff' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'}`}>Playoff</button>
+                     <button onClick={() => setStage('playoff')} className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${stage === 'playoff' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'}`}>Nhánh Playoff</button>
                  </div>
              </div>
              <div className="flex items-center gap-3 shrink-0 ml-4">
@@ -161,44 +160,13 @@ export const SummaryDashboard: React.FC<Props> = ({ data }) => {
              <div className="absolute bottom-0 left-0 h-0.5 bg-blue-500 transition-all ease-linear" style={{ width: `${progress}%` }}></div>
         </div>
 
-        <div className="flex-1 p-1 bg-slate-100 overflow-hidden">
+        <div className="flex-1 bg-slate-100 overflow-hidden">
             {stage === 'group' ? (
-                <div className={`grid gap-1.5 h-full grid-cols-1 ${catData.groups.length > 2 ? 'lg:grid-cols-2' : ''}`}>
+                <div className={`p-1 grid gap-1.5 h-full grid-cols-1 ${catData.groups.length > 2 ? 'lg:grid-cols-2' : ''}`}>
                     {catData.groups.map(g => <DenseGroupCard key={g.id} group={g} matches={catData.matches} teams={catData.teams} color={activeCatConfig.color.replace('text-', 'bg-')} />)}
                 </div>
             ) : (
-                <div className="h-full bg-white rounded-lg border border-gray-300 flex flex-col overflow-hidden">
-                    <div className="bg-slate-900 text-white py-2 text-center font-black uppercase text-[10px] tracking-widest">TRỰC TIẾP VÒNG LOẠI TRỰC TIẾP</div>
-                    <div className="flex-1 overflow-y-auto p-2 bg-slate-50 custom-scrollbar">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
-                            {knockoutMatches.sort((a,b) => (a.matchNumber || 0) - (b.matchNumber || 0)).map(m => {
-                                const tA = catData.teams.find(t => t.id === m.teamAId);
-                                const tB = catData.teams.find(t => t.id === m.teamBId);
-                                return (
-                                    <div key={m.id} className="border border-gray-200 rounded-lg p-2.5 bg-white shadow-sm flex flex-col gap-2">
-                                        <div className="flex justify-between border-b pb-1 text-[8px] font-black uppercase"><span className="text-slate-400">{m.roundName}</span><span className="text-blue-500">{m.time}</span></div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex-1 text-right min-w-0">
-                                                <div className="font-black text-[10px] leading-tight text-slate-800">
-                                                    <div className="truncate">{tA?.name1 || '...'}</div>
-                                                    <div className="truncate">{tA?.name2 || '...'}</div>
-                                                </div>
-                                            </div>
-                                            <div className={`px-2 py-0.5 rounded font-mono font-black text-[11px] ${m.isFinished ? 'bg-slate-900 text-yellow-400' : 'bg-slate-100 text-slate-300'}`}>{m.isFinished ? `${m.score.set1.a}-${m.score.set1.b}` : 'VS'}</div>
-                                            <div className="flex-1 text-left min-w-0">
-                                                <div className="font-black text-[10px] leading-tight text-slate-800">
-                                                    <div className="truncate">{tB?.name1 || '...'}</div>
-                                                    <div className="truncate">{tB?.name2 || '...'}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-[7px] font-black text-orange-600 uppercase text-center">{m.court || 'CHƯA CÓ SÂN'}</div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </div>
-                </div>
+                <TournamentBracket matches={knockoutMatches} teams={catData.teams} />
             )}
         </div>
     </div>

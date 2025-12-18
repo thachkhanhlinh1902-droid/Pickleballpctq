@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { CategoryData, Match, Team } from '../types';
 import { useStore } from '../context/Store';
 import { calculateGroupRanking } from '../utils/logic';
-import { RefreshCcw, Medal } from 'lucide-react';
+import { RefreshCcw, Medal, LayoutGrid, GitBranch } from 'lucide-react';
 import { MatchCard } from './MatchCard';
+import { TournamentBracket } from './TournamentBracket';
 
 interface Props {
   categoryData: CategoryData;
@@ -15,6 +16,7 @@ export const KnockoutManager: React.FC<Props> = ({ categoryData }) => {
   const { key, matches, groups, teams } = categoryData;
   const knockoutMatches = matches.filter(m => !m.groupId);
   const [lanhDaoOption, setLanhDaoOption] = useState<'A' | 'B'>('A');
+  const [viewMode, setViewMode] = useState<'grid' | 'bracket'>('bracket');
 
   const getRanked = (groupName: string) => {
     const group = groups.find(g => g.name === groupName);
@@ -45,13 +47,11 @@ export const KnockoutManager: React.FC<Props> = ({ categoryData }) => {
         const rA = getRanked('A'); const rB = getRanked('B'); const rC = getRanked('C'); const rD = getRanked('D');
         let tB1 = rB[0], tB2 = rB[1], tD1 = rD[0], tD2 = rD[1];
 
-        // Logic Lãnh đạo Phương án B: Lấy Nhì và Ba bảng B, D
         if (key === 'lanhdao' && lanhDaoOption === 'B') {
             tB1 = rB[1] || null; tB2 = rB[2] || null; 
             tD1 = rD[1] || null; tD2 = rD[2] || null;
         }
 
-        // Bắt cặp chéo Tứ kết: A-C, B-D
         createOrUpdate('TK1', 'Tứ kết 1 (1A-2C)', rA[0] || null, rC[1] || null);
         createOrUpdate('TK2', 'Tứ kết 2 (1C-2A)', rC[0] || null, rA[1] || null);
         createOrUpdate('TK3', 'Tứ kết 3 (1B-2D)', tB1 || null, tD2 || null);
@@ -81,7 +81,14 @@ export const KnockoutManager: React.FC<Props> = ({ categoryData }) => {
   return (
     <div className="mt-8">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 bg-slate-100 p-4 rounded-xl border border-slate-200 gap-4">
-        <h2 className="text-xl font-black text-slate-700 flex items-center gap-3 italic uppercase"><Medal size={24} className="text-orange-500" /> Vòng Chung Kết</h2>
+        <div className="flex items-center gap-4">
+            <h2 className="text-xl font-black text-slate-700 flex items-center gap-3 italic uppercase"><Medal size={24} className="text-orange-500" /> Playoff</h2>
+            <div className="flex bg-white rounded-lg p-1 border border-slate-300 shadow-sm">
+                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-400 hover:bg-slate-100'}`}><LayoutGrid size={16}/></button>
+                <button onClick={() => setViewMode('bracket')} className={`p-1.5 rounded-md transition-all ${viewMode === 'bracket' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-400 hover:bg-slate-100'}`}><GitBranch size={16}/></button>
+            </div>
+        </div>
+
         <div className="flex items-center gap-3">
             {key === 'lanhdao' && isAdmin && (
                 <div className="flex bg-white rounded-lg p-1 border border-slate-300 shadow-sm">
@@ -92,12 +99,21 @@ export const KnockoutManager: React.FC<Props> = ({ categoryData }) => {
             {isAdmin && <button onClick={runLogic} className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-bold text-xs uppercase shadow-md active:scale-95 transition-all"><RefreshCcw size={16} /> Cập nhật Nhánh</button>}
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {knockoutMatches.length === 0 ? (
-              <div className="col-span-full py-12 text-center text-slate-400 uppercase font-bold text-xs bg-white rounded-xl border-2 border-dashed">Chưa có dữ liệu vòng chung kết</div>
-          ) : knockoutMatches.sort((a,b) => (a.matchNumber || 0) - (b.matchNumber || 0)).map(m => (
-              <MatchCard key={m.id} match={m} teamA={teams.find(t=>t.id===m.teamAId)} teamB={teams.find(t=>t.id===m.teamBId)} categoryName="" isKnockout={true} />
-          ))}
+
+      <div className="min-h-[400px]">
+          {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {knockoutMatches.length === 0 ? (
+                      <div className="col-span-full py-12 text-center text-slate-400 uppercase font-bold text-xs bg-white rounded-xl border-2 border-dashed">Chưa có dữ liệu vòng chung kết</div>
+                  ) : knockoutMatches.sort((a,b) => (a.matchNumber || 0) - (b.matchNumber || 0)).map(m => (
+                      <MatchCard key={m.id} match={m} teamA={teams.find(t=>t.id===m.teamAId)} teamB={teams.find(t=>t.id===m.teamBId)} categoryName="" isKnockout={true} />
+                  ))}
+              </div>
+          ) : (
+              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden h-[600px]">
+                  <TournamentBracket matches={knockoutMatches} teams={teams} />
+              </div>
+          )}
       </div>
     </div>
   );

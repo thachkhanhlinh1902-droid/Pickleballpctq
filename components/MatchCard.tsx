@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Match, Team } from '../types';
-import { FileDown, MapPin } from 'lucide-react';
+import { FileDown, MapPin, Trophy, Calendar } from 'lucide-react';
 import { generateMatchReport } from '../utils/wordExporter';
 import { useStore } from '../context/Store';
 
@@ -24,56 +24,69 @@ export const MatchCard: React.FC<Props> = ({ match, teamA, teamB, categoryName, 
   }, [match]);
 
   if (!teamA || !teamB) return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-2 opacity-60 italic text-[10px] text-center uppercase tracking-wider">Chờ xác định: {match.roundName}</div>
+    <div className="bg-slate-100 p-6 rounded-2xl border-2 border-dashed border-slate-300 mb-4 opacity-60 flex items-center justify-center">
+      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic">
+        {match.roundName}: ĐANG CHỜ CẶP ĐẤU...
+      </span>
+    </div>
   );
 
-  const timeInfo = match.time || '--:-- --/--';
-
-  const TeamBox = ({ team, align }: { team: Team, align: 'right' | 'left' }) => (
-    <div className={`flex-1 ${align === 'right' ? 'text-right pr-3' : 'text-left pl-3'} min-w-0 flex flex-col justify-center`}>
-        <div className={`text-[11px] font-black leading-tight ${match.winnerId === team.id ? 'text-green-700' : 'text-slate-800'}`}>
-            <div className="truncate">{team.name1}</div>
-            <div className="truncate">{team.name2}</div>
+  const TeamBox = ({ team, align, isWinner }: { team: Team, align: 'right' | 'left', isWinner: boolean }) => (
+    <div className={`flex-1 flex flex-col min-w-0 ${align === 'right' ? 'text-right' : 'text-left'}`}>
+        <div className={`flex items-start gap-3 mb-2 ${align === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
+             <div className={`text-[14px] font-black leading-tight tracking-tight ${isWinner ? 'text-blue-700 drop-shadow-sm' : 'text-slate-900'}`}>
+                <div>{team.name1}</div>
+                <div>{team.name2}</div>
+            </div>
+            {isWinner && <div className="mt-1 bg-yellow-400 p-1 rounded-full shadow-sm"><Trophy size={16} className="text-white fill-white" /></div>}
         </div>
-        {/* Đảm bảo tên đơn vị có đầy đủ dấu */}
-        <div className="text-[9px] text-slate-500 italic truncate mt-1 leading-none">{team.org}</div>
+        <div className={`text-[10px] font-bold uppercase italic tracking-tight ${isWinner ? 'text-blue-500' : 'text-slate-400'}`}>
+            {team.org}
+        </div>
     </div>
   );
 
   return (
-    <div className={`bg-white rounded-xl shadow-md border-2 mb-3 relative transition-all overflow-hidden ${match.isFinished ? 'border-green-500' : 'border-slate-200'}`}>
-      <div className={`bg-slate-50 px-3 py-2 flex justify-between items-center border-b text-[10px] font-black uppercase`}>
-         <span className={isKnockout ? 'text-red-600' : 'text-blue-600'}>{match.roundName}</span>
-         <button onClick={() => generateMatchReport(match, teamA, teamB, categoryName)} title="Tải biên bản Word" className="text-slate-400 hover:text-green-600 transition-colors"><FileDown size={16}/></button>
+    <div className={`bg-white rounded-2xl shadow-md border-2 mb-6 relative transition-all overflow-hidden ${match.isFinished ? 'border-slate-200 shadow-slate-200/50' : 'border-blue-200 shadow-blue-200/40'}`}>
+      {/* Label Header */}
+      <div className={`px-4 py-2.5 flex justify-between items-center text-[10px] font-black uppercase tracking-widest ${match.isFinished ? 'bg-slate-800 text-slate-400' : 'bg-blue-600 text-white shadow-lg'}`}>
+         <div className="flex items-center gap-2">
+            <span className={isKnockout ? 'text-yellow-400' : ''}>{match.roundName}</span>
+            {match.isFinished && <span className="bg-green-500 text-white text-[8px] px-2 py-0.5 rounded-full">KẾT THÚC</span>}
+         </div>
+         <div className="flex items-center gap-4">
+             <span className="flex items-center gap-1.5 opacity-80"><MapPin size={12}/> {match.court || 'SÂN TỰ DO'}</span>
+             <button onClick={() => generateMatchReport(match, teamA, teamB, categoryName)} className="hover:text-yellow-400 transition-colors bg-white/10 p-1 rounded"><FileDown size={14}/></button>
+         </div>
       </div>
 
-      <div className="p-3.5 flex items-center justify-between gap-1">
-        <TeamBox team={teamA} align="right" />
+      <div className="p-6 flex items-center justify-between gap-4 bg-gradient-to-b from-white to-slate-50/80">
+        <TeamBox team={teamA} align="right" isWinner={match.winnerId === teamA.id} />
 
-        <div className="flex flex-col items-center shrink-0 min-w-[100px] border-x border-slate-50 px-1">
-            <div className="text-[8px] font-bold text-blue-500 mb-1 leading-none whitespace-nowrap">{timeInfo}</div>
-            <div className={`flex items-center justify-center p-1 rounded-lg border shadow-inner ${match.isFinished ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+        {/* Scoreboard - Clear & Professional */}
+        <div className="flex flex-col items-center shrink-0 min-w-[140px]">
+            <div className="flex items-center gap-1.5 text-[9px] font-black text-slate-500 mb-3 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm uppercase">
+               <Calendar size={12} className="text-blue-500" /> {match.time || 'CHƯA ĐỊNH'}
+            </div>
+            
+            <div className={`flex items-center justify-center h-16 w-full rounded-2xl border-2 transition-all overflow-hidden ${match.isFinished ? 'bg-slate-900 border-slate-950 shadow-2xl scale-105' : 'bg-white border-slate-200 shadow-inner'}`}>
                 {isAdmin ? (
-                    <div className="flex items-center gap-1">
-                        <input type="number" className="w-8 h-8 text-center font-black rounded border bg-white text-xs outline-none p-0 focus:ring-1 focus:ring-blue-400" value={s1a} onChange={e=>setS1a(Number(e.target.value))} onBlur={() => updateMatch(match.category, { ...match, score: { ...match.score, set1: { a: s1a, b: s1b } } })}/>
-                        <span className="font-bold text-slate-400">:</span>
-                        <input type="number" className="w-8 h-8 text-center font-black rounded border bg-white text-xs outline-none p-0 focus:ring-1 focus:ring-blue-400" value={s1b} onChange={e=>setS1b(Number(e.target.value))} onBlur={() => updateMatch(match.category, { ...match, score: { ...match.score, set1: { a: s1a, b: s1b } } })}/>
+                    <div className="flex items-center h-full">
+                        <input type="number" className="w-16 h-full text-center font-black bg-transparent text-2xl outline-none p-0 focus:bg-blue-500/10 transition-colors text-slate-900" value={s1a} onChange={e=>setS1a(Number(e.target.value))} onBlur={() => updateMatch(match.category, { ...match, score: { ...match.score, set1: { a: s1a, b: s1b } } })}/>
+                        <div className="w-px h-10 bg-slate-200"></div>
+                        <input type="number" className="w-16 h-full text-center font-black bg-transparent text-2xl outline-none p-0 focus:bg-blue-500/10 transition-colors text-slate-900" value={s1b} onChange={e=>setS1b(Number(e.target.value))} onBlur={() => updateMatch(match.category, { ...match, score: { ...match.score, set1: { a: s1a, b: s1b } } })}/>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-2 font-mono font-black text-xl px-2">
-                        <span className={match.winnerId === teamA.id ? 'text-yellow-400' : match.isFinished ? 'text-slate-500' : 'text-slate-200'}>{s1a}</span>
-                        <span className="text-slate-600 opacity-20">-</span>
-                        <span className={match.winnerId === teamB.id ? 'text-yellow-400' : match.isFinished ? 'text-slate-500' : 'text-slate-200'}>{s1b}</span>
+                    <div className="flex items-center gap-4 font-mono font-black text-4xl tracking-tighter">
+                        <span className={match.winnerId === teamA.id ? 'text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]' : match.isFinished ? 'text-white' : 'text-slate-900'}>{s1a}</span>
+                        <span className="text-slate-500 opacity-30 text-2xl">:</span>
+                        <span className={match.winnerId === teamB.id ? 'text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]' : match.isFinished ? 'text-white' : 'text-slate-900'}>{s1b}</span>
                     </div>
                 )}
             </div>
-            {/* Thay đổi hiển thị Sân đầy đủ */}
-            <div className="text-[8px] font-black text-orange-600 mt-2 uppercase flex items-center gap-1">
-                <MapPin size={10}/> {match.court || 'CHƯA RÕ'}
-            </div>
         </div>
 
-        <TeamBox team={teamB} align="left" />
+        <TeamBox team={teamB} align="left" isWinner={match.winnerId === teamB.id} />
       </div>
     </div>
   );
