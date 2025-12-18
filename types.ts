@@ -1,4 +1,5 @@
 
+
 export type CategoryKey = 'lanhdao' | 'nam' | 'nu' | 'namnu';
 
 export interface Player {
@@ -12,11 +13,13 @@ export interface Team {
   org: string; // Đơn vị
   groupId?: string;
   initialGroupName?: string; // Dùng để map bảng khi import excel
+  // Added points to stats to reflect the calculated ranking points (e.g., 2 for a win)
   stats?: {
     played: number;
     won: number;
     lost: number;
     pointsDiff: number; // Hiệu số
+    points: number;
   };
 }
 

@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { StoreProvider, useStore } from './context/Store';
 import { CategoryKey } from './types';
@@ -44,7 +45,8 @@ const PickleballIcon = ({ size = 24, className = "" }: { size?: number, classNam
 );
 
 const MainContent: React.FC = () => {
-  const { data, importTeams, setData, resetData, clearCategory, simulateResults, isAdmin, login, logout, isOnline, saveStatus, forceSync, isLoading, errorMsg, serverMode } = useStore();
+  // Fix: Removed 'forceSync' and 'errorMsg' which are not defined in StoreContextType, replaced with 'uploadDataManual'
+  const { data, importTeams, setData, resetData, clearCategory, simulateResults, isAdmin, login, logout, isOnline, saveStatus, uploadDataManual, isLoading, serverMode } = useStore();
   const [activeTab, setActiveTab] = useState<CategoryKey | 'summary' | 'results' | 'admin'>('summary');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -244,14 +246,15 @@ const MainContent: React.FC = () => {
               {/* LEFT: STATUS */}
               <div className="flex items-center gap-2 z-10 shrink-0">
                   <div className="flex items-center gap-2">
+                        {/* Fix: Replaced forceSync with uploadDataManual */}
                         {serverMode === 'real-db' && (
-                            <span onClick={forceSync} className="flex items-center gap-1 text-[10px] bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full font-bold border border-green-500/30 cursor-pointer hover:bg-green-500/30 transition-colors" title="Đã kết nối Database Vĩnh Viễn (KV)"><Database size={10}/> ONLINE</span>
+                            <span onClick={uploadDataManual} className="flex items-center gap-1 text-[10px] bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full font-bold border border-green-500/30 cursor-pointer hover:bg-green-500/30 transition-colors" title="Đã kết nối Database Vĩnh Viễn (KV)"><Database size={10}/> ONLINE</span>
                         )}
                         {serverMode === 'temporary-memory' && (
-                            <span onClick={forceSync} className="flex items-center gap-1 text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold border border-amber-500/30 cursor-pointer hover:bg-amber-500/30 transition-colors" title="Đang dùng bộ nhớ tạm"><Database size={10}/> TEMP</span>
+                            <span onClick={uploadDataManual} className="flex items-center gap-1 text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold border border-amber-500/30 cursor-pointer hover:bg-amber-500/30 transition-colors" title="Đang dùng bộ nhớ tạm"><Database size={10}/> TEMP</span>
                         )}
                         {serverMode === 'offline' && (
-                            <span onClick={forceSync} className="flex items-center gap-1 text-[10px] bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full font-bold border border-red-500/30 cursor-pointer hover:bg-red-500/30 transition-colors" title="Không kết nối được Server"><WifiOff size={10}/> OFFLINE</span>
+                            <span onClick={uploadDataManual} className="flex items-center gap-1 text-[10px] bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full font-bold border border-red-500/30 cursor-pointer hover:bg-red-500/30 transition-colors" title="Không kết nối được Server"><WifiOff size={10}/> OFFLINE</span>
                         )}
                         
                         {saveStatus === 'saving' && <span className="flex items-center gap-1 text-[10px] text-blue-300 animate-pulse font-medium hidden md:flex"><Loader2 size={10} className="animate-spin"/> Lưu...</span>}
