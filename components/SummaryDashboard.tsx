@@ -16,7 +16,7 @@ const CATEGORIES: { key: CategoryKey, label: string, icon: any, color: string }[
     { key: 'namnu', label: 'NAM NỮ', icon: Users, color: 'text-purple-600' },
 ];
 
-const AUTO_ROTATE_INTERVAL = 25000;
+const AUTO_ROTATE_INTERVAL = 60000; // Tăng lên 1 phút (60,000ms)
 
 const DenseMatchRow: React.FC<{ match: Match, teams: Team[] }> = ({ match, teams }) => {
     const tA = teams.find(t => t.id === match.teamAId);
@@ -25,15 +25,20 @@ const DenseMatchRow: React.FC<{ match: Match, teams: Team[] }> = ({ match, teams
 
     const isFinished = match.isFinished;
     
-    const TeamInfo = ({ team, align }: { team: Team | undefined, align: 'right' | 'left' }) => (
-        <div className={`flex-[2.5] ${align === 'right' ? 'text-right pr-2' : 'text-left pl-2'} min-w-0 flex flex-col justify-center`}>
-            <div className={`text-[10px] sm:text-[11px] font-black leading-tight ${match.winnerId === team?.id ? 'text-blue-700' : 'text-slate-800'}`}>
-                <div className="truncate">{team?.name1}</div>
-                <div className="truncate">{team?.name2}</div>
+    const TeamInfo = ({ team, align }: { team: Team | undefined, align: 'right' | 'left' }) => {
+        const isWinner = isFinished && match.winnerId === team?.id;
+        return (
+            <div className={`flex-[2.5] ${align === 'right' ? 'text-right pr-2' : 'text-left pl-2'} min-w-0 flex flex-col justify-center`}>
+                <div className={`text-[10px] sm:text-[11px] font-black leading-tight ${isWinner ? 'text-blue-700' : 'text-slate-800'}`}>
+                    <div className="truncate">{team?.name1}</div>
+                    <div className="truncate">{team?.name2}</div>
+                </div>
+                <div className={`text-[7px] sm:text-[8px] italic truncate leading-none mt-0.5 font-bold uppercase ${isWinner ? 'text-blue-500' : 'text-slate-400'}`}>
+                    {team?.org}
+                </div>
             </div>
-            <div className="text-[7px] sm:text-[8px] text-slate-400 italic truncate leading-none mt-0.5 font-bold uppercase">{team?.org}</div>
-        </div>
-    );
+        );
+    };
 
     return (
         <div className={`flex items-stretch border-b border-gray-100 py-2 px-1 ${isFinished ? 'bg-slate-50' : 'bg-white'}`}>
@@ -41,7 +46,8 @@ const DenseMatchRow: React.FC<{ match: Match, teams: Team[] }> = ({ match, teams
 
             <div className="flex flex-col items-center justify-center shrink-0 min-w-[90px] px-1 border-x border-slate-100">
                 <div className="text-[7px] font-black text-blue-500 leading-none mb-1.5 whitespace-nowrap uppercase">{match.time || '--:--'}</div>
-                <div className={`w-full py-1 rounded-md font-mono font-black text-center text-[11px] shadow-sm ${isFinished ? 'bg-slate-900 text-yellow-400' : 'bg-blue-100 text-blue-900 border border-blue-200'}`}>
+                {/* Scoreboard style with high contrast */}
+                <div className={`w-full py-1 rounded-md font-mono font-black text-center text-[11px] shadow-sm border ${isFinished ? 'bg-slate-900 text-yellow-400 border-slate-950' : 'bg-blue-50 text-blue-900 border-blue-100'}`}>
                     {isFinished ? `${match.score.set1.a}-${match.score.set1.b}` : 'VS'}
                 </div>
                 <div className="text-[6px] font-black text-orange-600 mt-1.5 leading-none uppercase tracking-tighter">{match.court || 'CHƯA RÕ'}</div>
@@ -55,7 +61,6 @@ const DenseMatchRow: React.FC<{ match: Match, teams: Team[] }> = ({ match, teams
 const DenseGroupCard: React.FC<{ group: Group, matches: Match[], teams: Team[], color: string }> = ({ group, matches, teams, color }) => {
     const ranking = calculateGroupRanking(teams, matches, group.id);
     const groupMatches = matches.filter(m => m.groupId === group.id).sort((a,b) => (a.matchNumber || 0) - (b.matchNumber || 0));
-    const textColor = color.replace('bg-', 'text-');
 
     return (
         <div className="bg-white rounded-lg border border-gray-300 shadow-sm overflow-hidden flex flex-col h-full">
@@ -63,14 +68,15 @@ const DenseGroupCard: React.FC<{ group: Group, matches: Match[], teams: Team[], 
                 <span className={`font-black text-[11px] uppercase tracking-widest text-white`}>BẢNG {group.name}</span>
             </div>
             <div className="flex flex-col sm:flex-row flex-1 overflow-hidden">
-                <div className="w-full sm:w-[45%] border-b sm:border-b-0 sm:border-r border-gray-200 overflow-y-auto custom-scrollbar bg-white">
+                <div className="w-full sm:w-[48%] border-b sm:border-b-0 sm:border-r border-gray-200 overflow-y-auto custom-scrollbar bg-white">
                     <table className="w-full table-fixed">
                         <thead className="bg-slate-50 text-slate-400 font-black uppercase text-[7px] sticky top-0 z-10 border-b">
                             <tr>
                                 <th className="py-2 w-5 text-center">#</th>
                                 <th className="py-2 text-left px-1">ĐỘI</th>
                                 <th className="py-2 w-5 text-center text-blue-700">Đ</th>
-                                <th className="py-2 w-4 text-center">T</th>
+                                <th className="py-2 w-4 text-center text-green-600">T</th>
+                                <th className="py-2 w-4 text-center text-red-500">B</th>
                                 <th className="py-2 w-5 text-center">HS</th>
                             </tr>
                         </thead>
@@ -87,6 +93,7 @@ const DenseGroupCard: React.FC<{ group: Group, matches: Match[], teams: Team[], 
                                     </td>
                                     <td className="text-center font-black text-blue-700 text-[10px] bg-blue-50/50">{t.stats?.points}</td>
                                     <td className="text-center font-bold text-green-600 text-[9px]">{t.stats?.won}</td>
+                                    <td className="text-center font-bold text-red-500 text-[9px]">{t.stats?.lost}</td>
                                     <td className="text-center font-mono font-bold text-slate-500 text-[8px]">{t.stats?.pointsDiff}</td>
                                 </tr>
                             ))}
