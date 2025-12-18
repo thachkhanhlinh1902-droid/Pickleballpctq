@@ -24,28 +24,27 @@ const DenseMatchRow: React.FC<{ match: Match, teams: Team[] }> = ({ match, teams
     if (!tA && !tB) return null;
 
     const isFinished = match.isFinished;
-    const scoreText = isFinished ? `${match.score.set1.a}-${match.score.set1.b}` : 'VS';
     
-    const timeInfo = match.time || '--:-- --/--';
-
     const TeamInfo = ({ team, align }: { team: Team | undefined, align: 'right' | 'left' }) => (
         <div className={`flex-[2.5] ${align === 'right' ? 'text-right pr-2' : 'text-left pl-2'} min-w-0 flex flex-col justify-center`}>
-            <div className={`text-[10px] sm:text-[11px] font-black leading-tight ${match.winnerId === team?.id ? 'text-green-700' : 'text-slate-800'}`}>
+            <div className={`text-[10px] sm:text-[11px] font-black leading-tight ${match.winnerId === team?.id ? 'text-blue-700' : 'text-slate-800'}`}>
                 <div className="truncate">{team?.name1}</div>
                 <div className="truncate">{team?.name2}</div>
             </div>
-            <div className="text-[7px] sm:text-[8px] text-slate-500 italic truncate leading-none mt-0.5">{team?.org}</div>
+            <div className="text-[7px] sm:text-[8px] text-slate-400 italic truncate leading-none mt-0.5 font-bold uppercase">{team?.org}</div>
         </div>
     );
 
     return (
-        <div className={`flex items-stretch border-b border-gray-100 py-2 px-1 ${isFinished ? 'bg-green-50/30' : 'bg-white'}`}>
+        <div className={`flex items-stretch border-b border-gray-100 py-2 px-1 ${isFinished ? 'bg-slate-50' : 'bg-white'}`}>
             <TeamInfo team={tA} align="right" />
 
-            <div className="flex flex-col items-center justify-center shrink-0 min-w-[85px] px-1 border-x border-gray-50 bg-slate-50/50">
-                <div className="text-[7px] font-bold text-blue-500 leading-none mb-1 whitespace-nowrap">{timeInfo}</div>
-                <div className={`w-full py-0.5 rounded font-mono font-black text-center text-[10px] ${isFinished ? 'bg-slate-800 text-yellow-400' : 'bg-slate-200 text-slate-400'}`}>{scoreText}</div>
-                <div className="text-[7px] font-bold text-orange-600 mt-1 leading-none uppercase">{match.court || 'CHƯA RÕ'}</div>
+            <div className="flex flex-col items-center justify-center shrink-0 min-w-[90px] px-1 border-x border-slate-100">
+                <div className="text-[7px] font-black text-blue-500 leading-none mb-1.5 whitespace-nowrap uppercase">{match.time || '--:--'}</div>
+                <div className={`w-full py-1 rounded-md font-mono font-black text-center text-[11px] shadow-sm ${isFinished ? 'bg-slate-900 text-yellow-400' : 'bg-blue-100 text-blue-900 border border-blue-200'}`}>
+                    {isFinished ? `${match.score.set1.a}-${match.score.set1.b}` : 'VS'}
+                </div>
+                <div className="text-[6px] font-black text-orange-600 mt-1.5 leading-none uppercase tracking-tighter">{match.court || 'CHƯA RÕ'}</div>
             </div>
 
             <TeamInfo team={tB} align="left" />
@@ -60,43 +59,41 @@ const DenseGroupCard: React.FC<{ group: Group, matches: Match[], teams: Team[], 
 
     return (
         <div className="bg-white rounded-lg border border-gray-300 shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="bg-slate-100 py-1 border-b border-gray-200 text-center shrink-0">
-                <span className={`font-black text-[11px] uppercase tracking-wider ${textColor}`}>BẢNG {group.name}</span>
+            <div className="bg-slate-900 py-1.5 border-b border-gray-200 text-center shrink-0">
+                <span className={`font-black text-[11px] uppercase tracking-widest text-white`}>BẢNG {group.name}</span>
             </div>
             <div className="flex flex-col sm:flex-row flex-1 overflow-hidden">
-                <div className="w-full sm:w-[50%] border-b sm:border-b-0 sm:border-r border-gray-200 overflow-y-auto custom-scrollbar bg-white">
+                <div className="w-full sm:w-[45%] border-b sm:border-b-0 sm:border-r border-gray-200 overflow-y-auto custom-scrollbar bg-white">
                     <table className="w-full table-fixed">
-                        <thead className="bg-gray-50 text-gray-400 font-bold uppercase text-[7px] sticky top-0 z-10">
+                        <thead className="bg-slate-50 text-slate-400 font-black uppercase text-[7px] sticky top-0 z-10 border-b">
                             <tr>
                                 <th className="py-2 w-5 text-center">#</th>
-                                <th className="py-2 text-left px-1">Cặp VĐV / Đơn vị</th>
-                                <th className="py-2 w-4 text-center text-blue-600">Đ</th>
+                                <th className="py-2 text-left px-1">ĐỘI</th>
+                                <th className="py-2 w-5 text-center text-blue-700">Đ</th>
                                 <th className="py-2 w-4 text-center">T</th>
-                                <th className="py-2 w-4 text-center">B</th>
                                 <th className="py-2 w-5 text-center">HS</th>
                             </tr>
                         </thead>
                         <tbody>
                             {ranking.map((t, i) => (
                                 <tr key={t.id} className={`border-b border-gray-50 ${i < 2 ? 'bg-yellow-50/50' : ''}`}>
-                                    <td className="text-center font-bold text-[10px] py-2">{i + 1}</td>
+                                    <td className="text-center font-black text-[10px] py-2 text-slate-400">{i + 1}</td>
                                     <td className="px-1 py-2 min-w-0">
-                                        <div className="font-bold text-[10px] leading-tight text-slate-800">
+                                        <div className="font-black text-[10px] leading-tight text-slate-800">
                                             <div className="truncate">{t.name1}</div>
                                             <div className="truncate">{t.name2}</div>
                                         </div>
-                                        <div className="text-[7px] text-slate-500 italic truncate leading-none mt-0.5">{t.org}</div>
+                                        <div className="text-[7px] text-slate-400 font-bold uppercase truncate leading-none mt-0.5 italic">{t.org}</div>
                                     </td>
-                                    <td className="text-center font-black text-blue-700 text-[10px]">{t.stats?.points}</td>
-                                    <td className="text-center font-bold text-green-600 text-[10px]">{t.stats?.won}</td>
-                                    <td className="text-center font-bold text-red-500 text-[10px]">{t.stats?.lost}</td>
+                                    <td className="text-center font-black text-blue-700 text-[10px] bg-blue-50/50">{t.stats?.points}</td>
+                                    <td className="text-center font-bold text-green-600 text-[9px]">{t.stats?.won}</td>
                                     <td className="text-center font-mono font-bold text-slate-500 text-[8px]">{t.stats?.pointsDiff}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-                <div className="flex-1 bg-gray-50/30 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 bg-white overflow-y-auto custom-scrollbar">
                     {groupMatches.length === 0 ? (
                         <div className="h-full flex items-center justify-center text-slate-300 text-[8px] uppercase font-bold italic">Chưa có lịch đấu</div>
                     ) : groupMatches.map(m => <DenseMatchRow key={m.id} match={m} teams={teams} />)}
@@ -162,7 +159,7 @@ export const SummaryDashboard: React.FC<Props> = ({ data }) => {
 
         <div className="flex-1 bg-slate-100 overflow-hidden">
             {stage === 'group' ? (
-                <div className={`p-1 grid gap-1.5 h-full grid-cols-1 ${catData.groups.length > 2 ? 'lg:grid-cols-2' : ''}`}>
+                <div className={`p-1.5 grid gap-2 h-full grid-cols-1 ${catData.groups.length > 2 ? 'lg:grid-cols-2' : ''}`}>
                     {catData.groups.map(g => <DenseGroupCard key={g.id} group={g} matches={catData.matches} teams={catData.teams} color={activeCatConfig.color.replace('text-', 'bg-')} />)}
                 </div>
             ) : (
