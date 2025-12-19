@@ -45,17 +45,21 @@ export const KnockoutManager: React.FC<Props> = ({ categoryData }) => {
 
     if (key === 'lanhdao' || key === 'nam') {
         const rA = getRanked('A'); const rB = getRanked('B'); const rC = getRanked('C'); const rD = getRanked('D');
+        
+        // Mặc định Option A: tB1, tD1 là Nhất; tB2, tD2 là Nhì
         let tB1 = rB[0], tB2 = rB[1], tD1 = rD[0], tD2 = rD[1];
 
         if (key === 'lanhdao' && lanhDaoOption === 'B') {
+            // Option B cho Lãnh đạo: Lấy Nhì và Ba (hoặc quy tắc riêng của BTC)
             tB1 = rB[1] || null; tB2 = rB[2] || null; 
             tD1 = rD[1] || null; tD2 = rD[2] || null;
         }
 
-        createOrUpdate('TK1', 'Tứ kết 1 (1A-2C)', rA[0] || null, rC[1] || null);
-        createOrUpdate('TK2', 'Tứ kết 2 (1C-2A)', rC[0] || null, rA[1] || null);
-        createOrUpdate('TK3', 'Tứ kết 3 (1B-2D)', tB1 || null, tD2 || null);
-        createOrUpdate('TK4', 'Tứ kết 4 (1D-2B)', tD1 || null, tB2 || null);
+        // Cập nhật logic: A-D và B-C
+        createOrUpdate('TK1', 'Tứ kết 1 (1A-2D)', rA[0] || null, tD2 || null);
+        createOrUpdate('TK2', 'Tứ kết 2 (1D-2A)', tD1 || null, rA[1] || null);
+        createOrUpdate('TK3', 'Tứ kết 3 (1B-2C)', tB1 || null, rC[1] || null);
+        createOrUpdate('TK4', 'Tứ kết 4 (1C-2B)', rC[0] || null, tB2 || null);
         
         createOrUpdate('BK1', 'Bán kết 1', null, null); createOrUpdate('BK2', 'Bán kết 2', null, null);
         createOrUpdate('CK', 'Chung kết', null, null);
