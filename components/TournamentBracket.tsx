@@ -12,39 +12,69 @@ const BracketMatch: React.FC<{ match: Match | undefined, teams: Team[], isFinal?
   const tA = teams.find(t => t.id === match?.teamAId);
   const tB = teams.find(t => t.id === match?.teamBId);
   
-  const renderTeam = (team: Team | undefined, isWinner: boolean, score: number | undefined, side: 'top' | 'bottom') => (
-    <div className={`flex items-center h-12 px-3 transition-all ${isWinner ? 'bg-blue-600' : 'bg-white'} ${side === 'top' ? 'border-b border-slate-100' : ''}`}>
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <div className="flex items-center gap-1">
-          <div className={`text-[9px] font-black leading-tight uppercase tracking-tighter ${isWinner ? 'text-white' : team ? 'text-slate-900' : 'text-slate-300'}`}>
-            {team ? (
-              <div className="flex flex-col">
-                <span className="truncate">{team.name1}</span>
-                <span className="truncate">{team.name2}</span>
-              </div>
-            ) : (
-              'CHỜ XÁC ĐỊNH'
-            )}
+  const isBo3 = match?.note === 'CK' || match?.roundName.toLowerCase().includes('chung kết');
+
+  const renderTeam = (team: Team | undefined, side: 'a' | 'b', isTop: boolean) => {
+    const isWinner = match?.isFinished && match.winnerId === team?.id;
+    
+    return (
+      <div className={`flex items-center h-12 px-3 transition-all ${isWinner ? 'bg-blue-600' : 'bg-white'} ${isTop ? 'border-b border-slate-100' : ''}`}>
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <div className="flex items-center gap-1">
+            <div className={`text-[9px] font-black leading-tight uppercase tracking-tighter ${isWinner ? 'text-white' : team ? 'text-slate-900' : 'text-slate-300'}`}>
+              {team ? (
+                <div className="flex flex-col">
+                  <span className="truncate">{team.name1}</span>
+                  <span className="truncate">{team.name2}</span>
+                </div>
+              ) : (
+                'CHỜ XÁC ĐỊNH'
+              )}
+            </div>
+            {isWinner && <Crown size={10} className="text-yellow-300 fill-yellow-300 shrink-0" />}
           </div>
-          {isWinner && <Crown size={10} className="text-yellow-300 fill-yellow-300 shrink-0" />}
+          {team?.org && (
+            <span className={`text-[7px] font-bold mt-0.5 uppercase tracking-tighter italic ${isWinner ? 'text-blue-100' : 'text-slate-400'}`}>
+              {team.org}
+            </span>
+          )}
         </div>
-        {team?.org && (
-          <span className={`text-[7px] font-bold mt-0.5 uppercase tracking-tighter italic ${isWinner ? 'text-blue-100' : 'text-slate-400'}`}>
-            {team.org}
-          </span>
-        )}
+
+        {/* PHẦN ĐIỂM SỐ */}
+        <div className={`flex items-center h-full border-l ${isWinner ? 'border-blue-500' : 'border-slate-100'}`}>
+          {!isBo3 ? (
+            // Trận Bo1: Chỉ 1 ô điểm to
+            <div className={`w-10 h-full flex items-center justify-center font-mono font-black text-base ${isWinner ? 'bg-blue-700 text-white' : match?.isFinished ? 'bg-slate-100 text-slate-900' : 'bg-slate-50 text-slate-400'}`}>
+              {match ? match.score.set1[side] : '-'}
+            </div>
+          ) : (
+            // Trận Bo3: 3 ô điểm nhỏ xếp ngang
+            <div className="flex h-full divide-x divide-white/10">
+              {[1, 2, 3].map(setNum => {
+                const sKey = `set${setNum}` as keyof typeof match.score;
+                const scoreA = match?.score[sKey].a || 0;
+                const scoreB = match?.score[sKey].b || 0;
+                const isSetWinner = (side === 'a' && scoreA > scoreB) || (side === 'b' && scoreB > scoreA);
+                const hasScore = scoreA > 0 || scoreB > 0 || match?.isFinished;
+
+                return (
+                  <div key={setNum} className={`w-7 h-full flex items-center justify-center font-mono font-black text-[10px] ${isWinner ? (isSetWinner ? 'bg-blue-800 text-yellow-400' : 'bg-blue-700 text-blue-300') : (isSetWinner ? 'bg-slate-200 text-blue-700' : 'bg-slate-50 text-slate-400')}`}>
+                    {hasScore ? match?.score[sKey][side] : '-'}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-      <div className={`w-9 h-full flex items-center justify-center font-mono font-black text-base border-l ${isWinner ? 'bg-blue-700 text-white border-blue-500' : match?.isFinished ? 'bg-slate-100 text-slate-900 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
-        {match?.isFinished ? score : (score !== undefined ? score : '-')}
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className={`w-56 shrink-0 relative flex flex-col group ${isFinal ? 'scale-105 z-20' : 'z-10'}`}>
-      <div className={`bg-white border-2 rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isFinal ? 'border-yellow-500 shadow-yellow-500/20' : 'border-slate-300 group-hover:border-blue-500'}`}>
-        {renderTeam(tA, match?.isFinished ? match.winnerId === tA?.id : false, match?.score.set1.a, 'top')}
-        {renderTeam(tB, match?.isFinished ? match.winnerId === tB?.id : false, match?.score.set1.b, 'bottom')}
+    <div className={`w-64 shrink-0 relative flex flex-col group ${isFinal ? 'scale-105 z-20' : 'z-10'}`}>
+      <div className={`bg-white border-2 rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isFinal ? 'border-yellow-500 shadow-yellow-500/20 ring-4 ring-yellow-400/10' : 'border-slate-300 group-hover:border-blue-500'}`}>
+        {renderTeam(tA, 'a', true)}
+        {renderTeam(tB, 'b', false)}
       </div>
 
       {(match?.time || match?.court) && (
@@ -87,8 +117,8 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
             
             {/* TK */}
             {tk.some(m => m) && (
-              <div className="flex flex-col w-56">
-                <RoundHeader label="Tứ Kết" />
+              <div className="flex flex-col w-64">
+                <RoundHeader label="Tứ Kết (Bo1)" />
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-12 relative">
                         <div className="relative z-10">
@@ -116,8 +146,8 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
             )}
 
             {/* BK */}
-            <div className="flex flex-col w-56">
-                <RoundHeader label="Bán Kết" />
+            <div className="flex flex-col w-64">
+                <RoundHeader label="Bán Kết (Bo1)" />
                 <div className="flex flex-col justify-around flex-1 py-[48px] gap-[184px]">
                     <div className="relative z-10">
                         <div className="absolute -left-6 lg:-left-8 top-1/2 w-6 lg:w-8 h-px bg-slate-300 -translate-y-1/2"></div>
@@ -133,8 +163,8 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
             </div>
 
             {/* CK */}
-            <div className="flex flex-col w-56">
-                <RoundHeader label="Chung Kết" />
+            <div className="flex flex-col w-64">
+                <RoundHeader label="Chung Kết (Bo3)" />
                 <div className="flex flex-col justify-center flex-1 relative">
                     <div className="absolute -left-6 lg:-left-8 top-1/2 w-6 lg:w-8 h-px bg-slate-300 -translate-y-1/2 pointer-events-none"></div>
                     <div className="flex flex-col items-center">

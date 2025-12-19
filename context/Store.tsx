@@ -59,7 +59,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return saved ? JSON.parse(saved) : null;
   });
 
-  // --- FIREBASE SYNC LOGIC ---
   useEffect(() => {
     if (!fbConfig) return;
     const db = initFirebase(fbConfig);
@@ -68,7 +67,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setServerMode('firebase');
     setIsOnline(true);
     
-    // Listen for real-time updates
     const unsub = onSnapshot(doc(db, "tournaments", "pc_tuyen_quang"), (docSnap) => {
         if (docSnap.exists()) {
             const cloudData = docSnap.data() as TournamentData;
@@ -81,9 +79,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => unsub();
   }, [fbConfig]);
 
-  // --- INITIAL LOAD (LOCAL + VERCEL KV) ---
   useEffect(() => {
-    if (fbConfig) return; // If firebase is active, let its effect handle loading
+    if (fbConfig) return; 
 
     const initApp = async () => {
         setIsLoading(true);
@@ -111,24 +108,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     initApp();
   }, [fbConfig]);
 
-  // --- AUTO SAVE LOGIC ---
   useEffect(() => {
     if (!isAdmin || isLoading) return;
     
     const timeout = setTimeout(async () => {
         setSaveStatus('saving');
         try {
-            // Save to Local
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 
-            // Save to Firebase if active
             if (fbConfig) {
                 const db = initFirebase(fbConfig);
                 if (db) {
                     await setDoc(doc(db, "tournaments", "pc_tuyen_quang"), data);
                 }
             } 
-            // Save to Vercel KV if online
             else if (isOnline) {
                 await fetch('/api/data', {
                     method: 'POST',
@@ -231,10 +224,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const cat = { ...prev.categories[category] };
         if (cat.teams.length === 0) return prev;
         cat.matches = cat.matches.map(m => {
-            if (m.groupId && !m.isFinished) {
-                const sA = Math.floor(Math.random() * 8) + 8;
-                const sB = Math.floor(Math.random() * 10);
-                return { ...m, isFinished: true, score: { ...m.score, set1: { a: sA, b: sB } }, winnerId: sA > sB ? m.teamAId : m.teamBId };
+            if (!m.isFinished) {
+                const isBo3 = m.note === 'CK' || m.roundName.toLowerCase().includes('chung kết');
+                
+                const score = {
+                    set1: { a: 11, b: Math.floor(Math.random() * 8) },
+                    set2: { a: isBo3 ? 11 : 0, b: isBo3 ? Math.floor(Math.random() * 8) : 0 },
+                    set3: { a: 0, b: 0 } // Thắng 2-0 là đủ
+                };
+                
+                return { 
+                    ...m, 
+                    isFinished: true, 
+                    score, 
+                    winnerId: m.teamAId 
+                };
             }
             return m;
         });

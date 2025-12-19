@@ -16,7 +16,7 @@ const CATEGORIES: { key: CategoryKey, label: string, icon: any, color: string }[
     { key: 'namnu', label: 'NAM NỮ', icon: Users, color: 'text-purple-600' },
 ];
 
-const AUTO_ROTATE_INTERVAL = 60000; // Tăng lên 1 phút (60,000ms)
+const AUTO_ROTATE_INTERVAL = 60000; // 1 phút
 
 const DenseMatchRow: React.FC<{ match: Match, teams: Team[] }> = ({ match, teams }) => {
     const tA = teams.find(t => t.id === match.teamAId);
@@ -24,6 +24,7 @@ const DenseMatchRow: React.FC<{ match: Match, teams: Team[] }> = ({ match, teams
     if (!tA && !tB) return null;
 
     const isFinished = match.isFinished;
+    const isBo3 = match.note === 'CK' || match.roundName.toLowerCase().includes('chung kết');
     
     const TeamInfo = ({ team, align }: { team: Team | undefined, align: 'right' | 'left' }) => {
         const isWinner = isFinished && match.winnerId === team?.id;
@@ -44,13 +45,29 @@ const DenseMatchRow: React.FC<{ match: Match, teams: Team[] }> = ({ match, teams
         <div className={`flex items-stretch border-b border-gray-100 py-2 px-1 ${isFinished ? 'bg-slate-50' : 'bg-white'}`}>
             <TeamInfo team={tA} align="right" />
 
-            <div className="flex flex-col items-center justify-center shrink-0 min-w-[90px] px-1 border-x border-slate-100">
-                <div className="text-[7px] font-black text-blue-500 leading-none mb-1.5 whitespace-nowrap uppercase">{match.time || '--:--'}</div>
-                {/* Scoreboard style with high contrast */}
-                <div className={`w-full py-1 rounded-md font-mono font-black text-center text-[11px] shadow-sm border ${isFinished ? 'bg-slate-900 text-yellow-400 border-slate-950' : 'bg-blue-50 text-blue-900 border-blue-100'}`}>
-                    {isFinished ? `${match.score.set1.a}-${match.score.set1.b}` : 'VS'}
+            <div className="flex flex-col items-center justify-center shrink-0 min-w-[95px] px-1 border-x border-slate-100">
+                <div className="text-[7px] font-black text-blue-500 leading-none mb-1 whitespace-nowrap uppercase">{match.time || '--:--'}</div>
+                
+                <div className="w-full flex flex-col gap-0.5">
+                    {/* Luôn hiển thị Set 1 */}
+                    <div className={`w-full py-0.5 rounded font-mono font-black text-center text-[11px] shadow-sm border ${isFinished ? 'bg-slate-900 text-yellow-400 border-slate-950' : 'bg-blue-50 text-blue-900 border-blue-100'}`}>
+                        {isFinished || (match.score.set1.a > 0 || match.score.set1.b > 0) ? `${match.score.set1.a}-${match.score.set1.b}` : 'VS'}
+                    </div>
+
+                    {/* Đối với Bo3, hiển thị thêm các ô Set 2 và Set 3 */}
+                    {isBo3 && (
+                        <div className="flex gap-0.5 w-full">
+                            <div className={`flex-1 py-0.5 rounded font-mono font-black text-center text-[9px] shadow-sm border ${isFinished ? 'bg-slate-800 text-yellow-500/80 border-slate-900' : 'bg-blue-50/50 text-blue-800 border-blue-100'}`}>
+                                {match.score.set2.a}-{match.score.set2.b}
+                            </div>
+                            <div className={`flex-1 py-0.5 rounded font-mono font-black text-center text-[9px] shadow-sm border ${isFinished ? 'bg-slate-800 text-yellow-500/80 border-slate-900' : 'bg-blue-50/50 text-blue-800 border-blue-100'}`}>
+                                {match.score.set3.a}-{match.score.set3.b}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="text-[6px] font-black text-orange-600 mt-1.5 leading-none uppercase tracking-tighter">{match.court || 'CHƯA RÕ'}</div>
+
+                <div className="text-[6px] font-black text-orange-600 mt-1 leading-none uppercase tracking-tighter">{match.court || 'CHƯA RÕ'}</div>
             </div>
 
             <TeamInfo team={tB} align="left" />
