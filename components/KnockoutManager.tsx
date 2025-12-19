@@ -16,11 +16,50 @@ export const KnockoutManager: React.FC<Props> = ({ categoryData }) => {
   const { key, matches, groups, teams } = categoryData;
   const knockoutMatches = matches.filter(m => !m.groupId);
   const [lanhDaoOption, setLanhDaoOption] = useState<'A' | 'B'>('A');
-  const [viewMode, setViewMode] = useState<'grid' | 'bracket'>('bracket');
+  const [viewMode, setViewMode] = useState<'bracket' | 'grid'>('bracket');
 
   const getRanked = (groupName: string) => {
     const group = groups.find(g => g.name === groupName);
     return group ? calculateGroupRanking(teams, matches, group.id) : [];
+  };
+
+  /**
+   * Tính toán điểm số "Công bằng" cho đội hạng 3 để xét vé vớt
+   * Nếu bảng có 5 đội, loại bỏ kết quả với đội bét bảng (hạng 5)
+   */
+  const getAdjustedThirdPlaceStats = (groupName: string) => {
+    const group = groups.find(g => g.name === groupName);
+    if (!group) return null;
+    
+    const ranking = calculateGroupRanking(teams, matches, group.id);
+    const team = ranking[2]; // Đội hạng 3
+    if (!team) return null;
+
+    let points = team.stats?.points || 0;
+    let diff = team.stats?.pointsDiff || 0;
+
+    // Nếu bảng có 5 đội, thực hiện loại trừ trận với đội hạng 5
+    if (ranking.length >= 5) {
+        const lastTeam = ranking[ranking.length - 1];
+        const groupMatches = matches.filter(m => m.groupId === group.id && m.isFinished);
+        const matchAgainstLast = groupMatches.find(m => 
+            (m.teamAId === team.id && m.teamBId === lastTeam.id) ||
+            (m.teamAId === lastTeam.id && m.teamBId === team.id)
+        );
+
+        if (matchAgainstLast) {
+            const isA = matchAgainstLast.teamAId === team.id;
+            const scoreSelf = isA ? matchAgainstLast.score.set1.a : matchAgainstLast.score.set1.b;
+            const scoreOpp = isA ? matchAgainstLast.score.set1.b : matchAgainstLast.score.set1.a;
+            
+            // Loại bỏ điểm (thường là thắng được 2 điểm)
+            if (matchAgainstLast.winnerId === team.id) points -= 2;
+            // Loại bỏ hiệu số
+            diff -= (scoreSelf - scoreOpp);
+        }
+    }
+
+    return { team, points, diff };
   };
 
   const runLogic = () => {
@@ -29,16 +68,18 @@ export const KnockoutManager: React.FC<Props> = ({ categoryData }) => {
     const courtPrefix = isNamNu ? 'B' : 'A';
     const defaultTime = isNamNu ? '14:00 19/12' : '08:00 19/12';
 
-    const createOrUpdate = (note: string, roundName: string, tA: Team | null, tB: Team | null) => {
+    const createOrUpdate = (note: string, roundName: string, tA: Team | null, tB: Team | null, mNum: number) => {
         const existing = knockoutMatches.find(m => m.note === note);
         if (existing) {
-            if (!existing.isFinished) updateMatch(key, { ...existing, teamAId: tA?.id || null, teamBId: tB?.id || null });
+            if (!existing.isFinished) {
+                updateMatch(key, { ...existing, teamAId: tA?.id || null, teamBId: tB?.id || null, matchNumber: mNum });
+            }
         } else {
             addKnockoutMatch(key, {
                 id: crypto.randomUUID(), teamAId: tA?.id || null, teamBId: tB?.id || null,
                 score: { set1: { a: 0, b: 0 }, set2: { a: 0, b: 0 }, set3: { a: 0, b: 0 } },
                 isFinished: false, winnerId: null, roundName, category: key, note,
-                time: defaultTime, court: `Sân ${courtPrefix}1`
+                time: defaultTime, court: `Sân ${courtPrefix}1`, matchNumber: mNum
             });
         }
     };
@@ -46,39 +87,62 @@ export const KnockoutManager: React.FC<Props> = ({ categoryData }) => {
     if (key === 'lanhdao' || key === 'nam') {
         const rA = getRanked('A'); const rB = getRanked('B'); const rC = getRanked('C'); const rD = getRanked('D');
         
-        // Mặc định Option A: tB1, tD1 là Nhất; tB2, tD2 là Nhì
         let tB1 = rB[0], tB2 = rB[1], tD1 = rD[0], tD2 = rD[1];
-
         if (key === 'lanhdao' && lanhDaoOption === 'B') {
-            // Option B cho Lãnh đạo: Lấy Nhì và Ba (hoặc quy tắc riêng của BTC)
             tB1 = rB[1] || null; tB2 = rB[2] || null; 
             tD1 = rD[1] || null; tD2 = rD[2] || null;
         }
 
-        // Cập nhật logic: A-D và B-C
-        createOrUpdate('TK1', 'Tứ kết 1 (1A-2D)', rA[0] || null, tD2 || null);
-        createOrUpdate('TK2', 'Tứ kết 2 (1D-2A)', tD1 || null, rA[1] || null);
-        createOrUpdate('TK3', 'Tứ kết 3 (1B-2C)', tB1 || null, rC[1] || null);
-        createOrUpdate('TK4', 'Tứ kết 4 (1C-2B)', rC[0] || null, tB2 || null);
+        /**
+         * SẮP XẾP CHỐNG TÁI ĐẤU (4 BẢNG):
+         * Nhánh 1 (Top): TK1 + TK2 -> BK1
+         * Nhánh 2 (Bottom): TK3 + TK4 -> BK2
+         */
+        createOrUpdate('TK1', 'Tứ kết 1 (1A-2D)', rA[0] || null, tD2 || null, 1);
+        createOrUpdate('TK2', 'Tứ kết 2 (1C-2B)', rC[0] || null, tB2 || null, 2);
+        createOrUpdate('TK3', 'Tứ kết 3 (1D-2A)', tD1 || null, rA[1] || null, 3);
+        createOrUpdate('TK4', 'Tứ kết 4 (1B-2C)', tB1 || null, rC[1] || null, 4);
         
-        createOrUpdate('BK1', 'Bán kết 1', null, null); createOrUpdate('BK2', 'Bán kết 2', null, null);
-        createOrUpdate('CK', 'Chung kết', null, null);
-    } else if (key === 'namnu') {
+        createOrUpdate('BK1', 'Bán kết 1', null, null, 5); 
+        createOrUpdate('BK2', 'Bán kết 2', null, null, 6);
+        createOrUpdate('CK', 'Chung kết', null, null, 7);
+    } 
+    else if (key === 'namnu') {
         const rA = getRanked('A'); const rB = getRanked('B'); const rC = getRanked('C');
-        const thirds = [rA[2], rB[2], rC[2]].filter(t => t).sort((a,b) => (b!.stats?.points || 0) - (a!.stats?.points || 0));
         
-        createOrUpdate('TK1', 'Tứ kết 1', rA[0] || null, rC[1] || null);
-        createOrUpdate('TK2', 'Tứ kết 2', rB[0] || null, thirds[1] || null);
-        createOrUpdate('TK3', 'Tứ kết 3', rC[0] || null, rA[1] || null);
-        createOrUpdate('TK4', 'Tứ kết 4', rB[1] || null, thirds[0] || null);
+        // Tính toán vé vớt dựa trên điểm số đã điều chỉnh (Normalised)
+        const adjA = getAdjustedThirdPlaceStats('A');
+        const adjB = getAdjustedThirdPlaceStats('B');
+        const adjC = getAdjustedThirdPlaceStats('C');
+
+        const thirds = [adjA, adjB, adjC]
+            .filter(x => x !== null)
+            .sort((a, b) => (b!.points - a!.points) || (b!.diff - a!.diff));
+
+        const LL1 = thirds[0]?.team || null;
+        const LL2 = thirds[1]?.team || null;
+
+        /**
+         * LOGIC NAM NỮ (3 bảng + 2 vé vớt):
+         * TK1: 1A - LL2
+         * TK2: 1B - 2C
+         * TK3: 2A - LL1
+         * TK4: 1C - 2B
+         */
+        createOrUpdate('TK1', 'Tứ kết 1 (1A-LL2)', rA[0] || null, LL2, 1);
+        createOrUpdate('TK2', 'Tứ kết 2 (1B-2C)', rB[0] || null, rC[1] || null, 2);
+        createOrUpdate('TK3', 'Tứ kết 3 (2A-LL1)', rA[1] || null, LL1, 3);
+        createOrUpdate('TK4', 'Tứ kết 4 (1C-2B)', rC[0] || null, rB[1] || null, 4);
         
-        createOrUpdate('BK1', 'Bán kết 1', null, null); createOrUpdate('BK2', 'Bán kết 2', null, null);
-        createOrUpdate('CK', 'Chung kết', null, null);
-    } else if (key === 'nu') {
+        createOrUpdate('BK1', 'Bán kết 1', null, null, 5); 
+        createOrUpdate('BK2', 'Bán kết 2', null, null, 6);
+        createOrUpdate('CK', 'Chung kết', null, null, 7);
+    } 
+    else if (key === 'nu') {
         const rA = getRanked('A'); const rB = getRanked('B');
-        createOrUpdate('BK1', 'Bán kết 1', rA[0] || null, rB[1] || null);
-        createOrUpdate('BK2', 'Bán kết 2', rB[0] || null, rA[1] || null);
-        createOrUpdate('CK', 'Chung kết', null, null);
+        createOrUpdate('BK1', 'Bán kết 1 (1A-2B)', rA[0] || null, rB[1] || null, 1);
+        createOrUpdate('BK2', 'Bán kết 2 (1B-2A)', rB[0] || null, rA[1] || null, 2);
+        createOrUpdate('CK', 'Chung kết', null, null, 3);
     }
   };
 

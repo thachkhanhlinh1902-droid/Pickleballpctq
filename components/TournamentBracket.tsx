@@ -43,23 +43,21 @@ const BracketMatch: React.FC<{ match: Match | undefined, teams: Team[], isFinal?
         {/* PHẦN ĐIỂM SỐ */}
         <div className={`flex items-center h-full border-l ${isWinner ? 'border-blue-500' : 'border-slate-100'}`}>
           {!isBo3 ? (
-            // Trận Bo1: Chỉ 1 ô điểm to
             <div className={`w-10 h-full flex items-center justify-center font-mono font-black text-base ${isWinner ? 'bg-blue-700 text-white' : match?.isFinished ? 'bg-slate-100 text-slate-900' : 'bg-slate-50 text-slate-400'}`}>
               {match ? match.score.set1[side] : '-'}
             </div>
           ) : (
-            // Trận Bo3: 3 ô điểm nhỏ xếp ngang
             <div className="flex h-full divide-x divide-white/10">
               {[1, 2, 3].map(setNum => {
                 const sKey = `set${setNum}` as keyof typeof match.score;
-                const scoreA = match?.score[sKey].a || 0;
-                const scoreB = match?.score[sKey].b || 0;
-                const isSetWinner = (side === 'a' && scoreA > scoreB) || (side === 'b' && scoreB > scoreA);
-                const hasScore = scoreA > 0 || scoreB > 0 || match?.isFinished;
+                const scoreSelf = match?.score[sKey][side] || 0;
+                const scoreOpp = match?.score[sKey][side === 'a' ? 'b' : 'a'] || 0;
+                const isSetWinner = scoreSelf > scoreOpp;
+                const hasScore = scoreSelf > 0 || scoreOpp > 0 || match?.isFinished;
 
                 return (
-                  <div key={setNum} className={`w-7 h-full flex items-center justify-center font-mono font-black text-[10px] ${isWinner ? (isSetWinner ? 'bg-blue-800 text-yellow-400' : 'bg-blue-700 text-blue-300') : (isSetWinner ? 'bg-slate-200 text-blue-700' : 'bg-slate-50 text-slate-400')}`}>
-                    {hasScore ? match?.score[sKey][side] : '-'}
+                  <div key={setNum} className={`w-8 h-full flex items-center justify-center font-mono font-black text-[10px] ${isWinner ? (isSetWinner ? 'bg-blue-800 text-yellow-400' : 'bg-blue-700 text-blue-300') : (isSetWinner ? 'bg-slate-200 text-blue-700' : 'bg-slate-50 text-slate-400')}`}>
+                    {hasScore ? scoreSelf : '-'}
                   </div>
                 );
               })}
@@ -71,7 +69,7 @@ const BracketMatch: React.FC<{ match: Match | undefined, teams: Team[], isFinal?
   };
 
   return (
-    <div className={`w-64 shrink-0 relative flex flex-col group ${isFinal ? 'scale-105 z-20' : 'z-10'}`}>
+    <div className={`w-72 shrink-0 relative flex flex-col group ${isFinal ? 'scale-105 z-20' : 'z-10'}`}>
       <div className={`bg-white border-2 rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isFinal ? 'border-yellow-500 shadow-yellow-500/20 ring-4 ring-yellow-400/10' : 'border-slate-300 group-hover:border-blue-500'}`}>
         {renderTeam(tA, 'a', true)}
         {renderTeam(tB, 'b', false)}
@@ -117,7 +115,7 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
             
             {/* TK */}
             {tk.some(m => m) && (
-              <div className="flex flex-col w-64">
+              <div className="flex flex-col w-72">
                 <RoundHeader label="Tứ Kết (Bo1)" />
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-12 relative">
@@ -146,7 +144,7 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
             )}
 
             {/* BK */}
-            <div className="flex flex-col w-64">
+            <div className="flex flex-col w-72">
                 <RoundHeader label="Bán Kết (Bo1)" />
                 <div className="flex flex-col justify-around flex-1 py-[48px] gap-[184px]">
                     <div className="relative z-10">
@@ -163,7 +161,7 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
             </div>
 
             {/* CK */}
-            <div className="flex flex-col w-64">
+            <div className="flex flex-col w-72">
                 <RoundHeader label="Chung Kết (Bo3)" />
                 <div className="flex flex-col justify-center flex-1 relative">
                     <div className="absolute -left-6 lg:-left-8 top-1/2 w-6 lg:w-8 h-px bg-slate-300 -translate-y-1/2 pointer-events-none"></div>
