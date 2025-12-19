@@ -40,7 +40,6 @@ const BracketMatch: React.FC<{ match: Match | undefined, teams: Team[], isFinal?
           )}
         </div>
 
-        {/* PHẦN ĐIỂM SỐ */}
         <div className={`flex items-center h-full border-l ${isWinner ? 'border-blue-500' : 'border-slate-100'}`}>
           {!isBo3 ? (
             <div className={`w-10 h-full flex items-center justify-center font-mono font-black text-base ${isWinner ? 'bg-blue-700 text-white' : match?.isFinished ? 'bg-slate-100 text-slate-900' : 'bg-slate-50 text-slate-400'}`}>
@@ -101,7 +100,7 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
   }
 
   const RoundHeader = ({ label }: { label: string }) => (
-    <div className="mb-8 w-full flex justify-center">
+    <div className="mb-6 w-full flex justify-center">
         <div className="bg-slate-900 text-white text-[8px] font-black uppercase tracking-[0.2em] py-1.5 px-6 rounded-full shadow-sm border-b-2 border-blue-500">
             {label}
         </div>
@@ -111,74 +110,47 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
   return (
     <div className="h-full w-full overflow-x-auto overflow-y-auto custom-scrollbar bg-[#f8fafc] relative">
       <div className="min-w-max flex flex-col items-center py-12 px-12">
-        <div className="flex items-stretch gap-12 lg:gap-16 relative">
+        <div className="flex items-start gap-12 lg:gap-20">
             
-            {/* TK */}
+            {/* TỨ KẾT */}
             {tk.some(m => m) && (
               <div className="flex flex-col w-72">
-                <RoundHeader label="Tứ Kết (Bo1)" />
-                <div className="flex flex-col gap-6">
-                    <div className="flex flex-col gap-12 relative">
-                        <div className="relative z-10">
-                            <BracketMatch match={tk[0]} teams={teams} />
-                            <div className="absolute -right-6 lg:-right-8 top-1/2 w-6 lg:w-8 h-[82px] border-t-2 border-r-2 border-slate-300 pointer-events-none rounded-tr-lg"></div>
-                        </div>
-                        <div className="relative z-10">
-                            <BracketMatch match={tk[1]} teams={teams} />
-                            <div className="absolute -right-6 lg:-right-8 top-1/2 w-6 lg:w-8 h-[82px] border-b-2 border-r-2 border-slate-300 -translate-y-full pointer-events-none rounded-br-lg"></div>
-                        </div>
-                    </div>
-                    <div className="h-6"></div>
-                    <div className="flex flex-col gap-12 relative">
-                        <div className="relative z-10">
-                            <BracketMatch match={tk[2]} teams={teams} />
-                            <div className="absolute -right-6 lg:-right-8 top-1/2 w-6 lg:w-8 h-[82px] border-t-2 border-r-2 border-slate-300 pointer-events-none rounded-tr-lg"></div>
-                        </div>
-                        <div className="relative z-10">
-                            <BracketMatch match={tk[3]} teams={teams} />
-                            <div className="absolute -right-6 lg:-right-8 top-1/2 w-6 lg:w-8 h-[82px] border-b-2 border-r-2 border-slate-300 -translate-y-full pointer-events-none rounded-br-lg"></div>
-                        </div>
-                    </div>
+                <RoundHeader label="Vòng Tứ Kết" />
+                <div className="flex flex-col gap-10">
+                    <BracketMatch match={tk[0]} teams={teams} />
+                    <BracketMatch match={tk[1]} teams={teams} />
+                    <div className="h-4"></div>
+                    <BracketMatch match={tk[2]} teams={teams} />
+                    <BracketMatch match={tk[3]} teams={teams} />
                 </div>
               </div>
             )}
 
-            {/* BK */}
+            {/* BÁN KẾT */}
             <div className="flex flex-col w-72">
-                <RoundHeader label="Bán Kết (Bo1)" />
-                <div className="flex flex-col justify-around flex-1 py-[48px] gap-[184px]">
-                    <div className="relative z-10">
-                        <div className="absolute -left-6 lg:-left-8 top-1/2 w-6 lg:w-8 h-px bg-slate-300 -translate-y-1/2"></div>
-                        <BracketMatch match={bk[0]} teams={teams} />
-                        <div className="absolute -right-6 lg:-right-8 top-1/2 w-6 lg:w-8 h-[134px] border-t-2 border-r-2 border-slate-300 pointer-events-none rounded-tr-lg"></div>
-                    </div>
-                    <div className="relative z-10">
-                        <div className="absolute -left-6 lg:-left-8 top-1/2 w-6 lg:w-8 h-px bg-slate-300 -translate-y-1/2"></div>
-                        <BracketMatch match={bk[1]} teams={teams} />
-                        <div className="absolute -right-6 lg:-right-8 top-1/2 w-6 lg:w-8 h-[134px] border-b-2 border-r-2 border-slate-300 -translate-y-full pointer-events-none rounded-br-lg"></div>
-                    </div>
+                <RoundHeader label="Vòng Bán Kết" />
+                <div className="flex flex-col gap-[120px] pt-[60px]">
+                    <BracketMatch match={bk[0]} teams={teams} />
+                    <BracketMatch match={bk[1]} teams={teams} />
                 </div>
             </div>
 
-            {/* CK */}
+            {/* CHUNG KẾT */}
             <div className="flex flex-col w-72">
-                <RoundHeader label="Chung Kết (Bo3)" />
-                <div className="flex flex-col justify-center flex-1 relative">
-                    <div className="absolute -left-6 lg:-left-8 top-1/2 w-6 lg:w-8 h-px bg-slate-300 -translate-y-1/2 pointer-events-none"></div>
-                    <div className="flex flex-col items-center">
-                        <div className="mb-4 relative">
-                            <div className="absolute inset-0 bg-yellow-400 blur-xl opacity-10"></div>
-                            <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-md relative z-10 ring-4 ring-white">
-                                <Trophy size={32} className="text-white drop-shadow-sm" />
-                            </div>
+                <RoundHeader label="Trận Chung Kết" />
+                <div className="flex flex-col items-center pt-[140px]">
+                    <div className="mb-6 relative">
+                        <div className="absolute inset-0 bg-yellow-400 blur-xl opacity-20"></div>
+                        <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-xl relative z-10 ring-4 ring-white">
+                            <Trophy size={40} className="text-white drop-shadow-sm" />
                         </div>
-                        <BracketMatch match={ck} teams={teams} isFinal={true} />
-                        {ck?.isFinished && (
-                            <div className="mt-6 text-center animate-in zoom-in duration-300 bg-slate-900 border border-yellow-500 text-yellow-500 px-4 py-1 rounded-md font-black uppercase text-[8px] tracking-widest shadow-lg">
-                                CHAMPIONS 2024
-                            </div>
-                        )}
                     </div>
+                    <BracketMatch match={ck} teams={teams} isFinal={true} />
+                    {ck?.isFinished && (
+                        <div className="mt-8 text-center animate-bounce bg-slate-900 border border-yellow-500 text-yellow-400 px-6 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-2xl ring-4 ring-yellow-400/20">
+                            CHAMPIONS 2024
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -16,8 +16,9 @@ const CATEGORIES: { key: CategoryKey, label: string }[] = [
 const MatchRow: React.FC<{ 
     match: Match, 
     teams: Team[], 
+    allMatches: Match[],
     onUpdate: (m: Match) => void,
-}> = ({ match, teams, onUpdate }) => {
+}> = ({ match, teams, allMatches, onUpdate }) => {
     
     const [score, setScore] = useState<MatchScore>(match.score);
     const [time, setTime] = useState(match.time || '');
@@ -31,7 +32,6 @@ const MatchRow: React.FC<{
         setTeamAId(match.teamAId || ''); setTeamBId(match.teamBId || '');
     }, [match]);
 
-    // LOGIC: Chỉ Chung kết mới đánh Bo3
     const isBo3 = match.note === 'CK' || match.roundName.toLowerCase().includes('chung kết');
 
     const hasChanges = 
@@ -69,6 +69,15 @@ const MatchRow: React.FC<{
     const tA = teams.find(t => t.id === teamAId);
     const tB = teams.find(t => t.id === teamBId);
 
+    // Logic: Lọc danh sách đội thắng để đưa lên đầu cho dễ chọn ở vòng Knockout
+    const sortedTeamsForKnockout = [...teams].sort((a, b) => {
+        const isWinnerA = allMatches.some(m => !m.groupId && m.winnerId === a.id);
+        const isWinnerB = allMatches.some(m => !m.groupId && m.winnerId === b.id);
+        if (isWinnerA && !isWinnerB) return -1;
+        if (!isWinnerA && isWinnerB) return 1;
+        return a.name1.localeCompare(b.name1);
+    });
+
     const ScoreInput = ({ s, side }: { s: keyof MatchScore, side: 'a' | 'b' }) => (
         <input 
             type="number" 
@@ -96,8 +105,15 @@ const MatchRow: React.FC<{
                 <div className="flex items-center gap-2">
                     {!match.groupId ? ( // Knockout selects
                         <select className="flex-1 text-[9px] border border-slate-200 rounded p-1 outline-none font-bold bg-white" value={teamAId} onChange={e => setTeamAId(e.target.value)}>
-                            <option value="">-- Đội A --</option>
-                            {teams.map(t => <option key={t.id} value={t.id}>{t.name1} - {t.name2}</option>)}
+                            <option value="">-- Chọn Đội A --</option>
+                            {sortedTeamsForKnockout.map(t => {
+                                const isWinner = allMatches.some(m => !m.groupId && m.winnerId === t.id);
+                                return (
+                                    <option key={t.id} value={t.id}>
+                                        {isWinner ? '🏆 ' : ''}{t.name1} & {t.name2} ({t.org})
+                                    </option>
+                                );
+                            })}
                         </select>
                     ) : (
                         <div className="flex-1 min-w-0 text-right">
@@ -114,7 +130,7 @@ const MatchRow: React.FC<{
                 </div>
             </td>
 
-            {/* Tỉ số: 1 séc (Bo1) hoặc 3 séc (Bo3) */}
+            {/* Tỉ số */}
             <td className="p-1 border-r text-center w-36">
                 <div className="flex flex-col gap-1 items-center">
                     <div className="flex items-center gap-1">
@@ -150,8 +166,15 @@ const MatchRow: React.FC<{
                     </button>
                     {!match.groupId ? (
                         <select className="flex-1 text-[9px] border border-slate-200 rounded p-1 outline-none font-bold bg-white" value={teamBId} onChange={e => setTeamBId(e.target.value)}>
-                            <option value="">-- Đội B --</option>
-                            {teams.map(t => <option key={t.id} value={t.id}>{t.name1} - {t.name2}</option>)}
+                            <option value="">-- Chọn Đội B --</option>
+                            {sortedTeamsForKnockout.map(t => {
+                                const isWinner = allMatches.some(m => !m.groupId && m.winnerId === t.id);
+                                return (
+                                    <option key={t.id} value={t.id}>
+                                        {isWinner ? '🏆 ' : ''}{t.name1} & {t.name2} ({t.org})
+                                    </option>
+                                );
+                            })}
                         </select>
                     ) : (
                         <div className="flex-1 min-w-0 text-left">
@@ -235,7 +258,7 @@ export const AdminPanel: React.FC = () => {
                                         </thead>
                                         <tbody>
                                             {groupedMatches[groupName].sort((a,b) => (a.matchNumber || 0) - (b.matchNumber || 0)).map((m) => (
-                                                <MatchRow key={m.id} match={m} teams={teams} onUpdate={m => updateMatch(activeCat, m)} />
+                                                <MatchRow key={m.id} match={m} teams={teams} allMatches={matches} onUpdate={m => updateMatch(activeCat, m)} />
                                             ))}
                                         </tbody>
                                     </table>
