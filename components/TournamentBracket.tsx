@@ -18,9 +18,9 @@ const BracketMatch: React.FC<{ match: Match | undefined, teams: Team[], isFinal?
     const isWinner = match?.isFinished && match.winnerId === team?.id;
     
     return (
-      <div className={`flex items-center h-12 px-3 transition-all ${isWinner ? 'bg-blue-600' : 'bg-white'} ${isTop ? 'border-b border-slate-100' : ''}`}>
+      <div className={`flex items-center h-12 px-3 transition-all duration-300 ${isWinner ? 'bg-blue-600' : 'bg-white'} ${isTop ? 'border-b border-slate-100' : ''}`}>
         <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <div className={`text-[9px] font-black leading-tight uppercase tracking-tighter ${isWinner ? 'text-white' : team ? 'text-slate-900' : 'text-slate-300'}`}>
               {team ? (
                 <div className="flex flex-col">
@@ -31,7 +31,16 @@ const BracketMatch: React.FC<{ match: Match | undefined, teams: Team[], isFinal?
                 'CHỜ XÁC ĐỊNH'
               )}
             </div>
-            {isWinner && <Crown size={10} className="text-yellow-300 fill-yellow-300 shrink-0" />}
+            {isWinner && (
+              <div className="flex items-center gap-1 shrink-0 animate-in zoom-in duration-500">
+                <Crown size={10} className="text-yellow-300 fill-yellow-300" />
+                {isFinal && (
+                  <span className="bg-yellow-400 text-blue-900 text-[8px] px-1.5 rounded font-black animate-pulse whitespace-nowrap shadow-sm">
+                    VÔ ĐỊCH
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           {team?.org && (
             <span className={`text-[7px] font-bold mt-0.5 uppercase tracking-tighter italic ${isWinner ? 'text-blue-100' : 'text-slate-400'}`}>
@@ -69,15 +78,15 @@ const BracketMatch: React.FC<{ match: Match | undefined, teams: Team[], isFinal?
 
   return (
     <div className={`w-72 shrink-0 relative flex flex-col group ${isFinal ? 'scale-105 z-20' : 'z-10'}`}>
-      <div className={`bg-white border-2 rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isFinal ? 'border-yellow-500 shadow-yellow-500/20 ring-4 ring-yellow-400/10' : 'border-slate-300 group-hover:border-blue-500'}`}>
+      <div className={`bg-white border-2 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ${isFinal ? 'border-yellow-500 shadow-yellow-500/30 ring-4 ring-yellow-400/10' : 'border-slate-200 group-hover:border-blue-400 group-hover:shadow-blue-100'}`}>
         {renderTeam(tA, 'a', true)}
         {renderTeam(tB, 'b', false)}
       </div>
 
       {(match?.time || match?.court) && (
-        <div className="absolute -bottom-4 left-0 right-0 flex justify-center gap-1 pointer-events-none">
-            {match.time && <span className="text-[6px] font-black text-blue-700 bg-blue-50 px-1 py-0.5 rounded border border-blue-100 uppercase">{match.time}</span>}
-            {match.court && <span className="text-[6px] font-black text-orange-700 bg-orange-50 px-1 py-0.5 rounded border border-orange-100 uppercase">{match.court}</span>}
+        <div className="absolute -bottom-4 left-0 right-0 flex justify-center gap-1 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
+            {match.time && <span className="text-[6px] font-black text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">{match.time}</span>}
+            {match.court && <span className="text-[6px] font-black text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 uppercase">{match.court}</span>}
         </div>
       )}
     </div>
@@ -94,14 +103,14 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
     return (
       <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-3 p-8 bg-slate-50">
         <Shield size={32} className="text-slate-200" />
-        <span className="italic text-[10px] uppercase font-black tracking-widest text-slate-300">Nhánh đấu trống</span>
+        <span className="italic text-[10px] uppercase font-black tracking-widest text-slate-300">Chưa có thông tin Playoff</span>
       </div>
     );
   }
 
   const RoundHeader = ({ label }: { label: string }) => (
-    <div className="mb-6 w-full flex justify-center">
-        <div className="bg-slate-900 text-white text-[8px] font-black uppercase tracking-[0.2em] py-1.5 px-6 rounded-full shadow-sm border-b-2 border-blue-500">
+    <div className="mb-8 w-full flex justify-center">
+        <div className="bg-slate-900 text-white text-[9px] font-black uppercase tracking-[0.2em] py-2 px-8 rounded-full shadow-lg border-b-2 border-blue-500">
             {label}
         </div>
     </div>
@@ -110,11 +119,11 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
   return (
     <div className="h-full w-full overflow-x-auto overflow-y-auto custom-scrollbar bg-[#f8fafc] relative">
       <div className="min-w-max flex flex-col items-center py-12 px-12">
-        <div className="flex items-start gap-12 lg:gap-20">
+        <div className="flex items-start gap-16 lg:gap-24">
             
             {/* TỨ KẾT */}
             {tk.some(m => m) && (
-              <div className="flex flex-col w-72">
+              <div className="flex flex-col w-72 animate-in slide-in-from-left-4 duration-500">
                 <RoundHeader label="Vòng Tứ Kết" />
                 <div className="flex flex-col gap-10">
                     <BracketMatch match={tk[0]} teams={teams} />
@@ -127,30 +136,25 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
             )}
 
             {/* BÁN KẾT */}
-            <div className="flex flex-col w-72">
+            <div className="flex flex-col w-72 animate-in fade-in duration-700 delay-200">
                 <RoundHeader label="Vòng Bán Kết" />
-                <div className="flex flex-col gap-[120px] pt-[60px]">
+                <div className="flex flex-col gap-[120px] pt-[64px]">
                     <BracketMatch match={bk[0]} teams={teams} />
                     <BracketMatch match={bk[1]} teams={teams} />
                 </div>
             </div>
 
             {/* CHUNG KẾT */}
-            <div className="flex flex-col w-72">
+            <div className="flex flex-col w-72 animate-in slide-in-from-right-4 duration-1000 delay-300">
                 <RoundHeader label="Trận Chung Kết" />
-                <div className="flex flex-col items-center pt-[140px]">
-                    <div className="mb-6 relative">
-                        <div className="absolute inset-0 bg-yellow-400 blur-xl opacity-20"></div>
-                        <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-xl relative z-10 ring-4 ring-white">
-                            <Trophy size={40} className="text-white drop-shadow-sm" />
+                <div className="flex flex-col items-center pt-[144px]">
+                    <div className="mb-8 relative group">
+                        <div className="absolute inset-0 bg-yellow-400 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                        <div className="w-24 h-24 bg-gradient-to-br from-yellow-300 via-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-2xl relative z-10 ring-4 ring-white group-hover:scale-110 transition-transform duration-500">
+                            <Trophy size={48} className="text-white drop-shadow-md" />
                         </div>
                     </div>
                     <BracketMatch match={ck} teams={teams} isFinal={true} />
-                    {ck?.isFinished && (
-                        <div className="mt-8 text-center animate-bounce bg-slate-900 border border-yellow-500 text-yellow-400 px-6 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-2xl ring-4 ring-yellow-400/20">
-                            VÔ ĐỊCH
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

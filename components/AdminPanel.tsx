@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../context/Store';
 import { CategoryKey, Match, Team, MatchScore } from '../types';
-import { Save, Trophy, Calendar, MapPin, GripVertical, Download, Upload, Trash2, FileText, CheckCircle2, Database, Star, Cloud } from 'lucide-react';
+import { Save, Trophy, Calendar, MapPin, Download, Upload, FileText, CheckCircle2, Database, Star, Cloud } from 'lucide-react';
 import { exportScheduleToWord } from '../utils/wordExporter';
 import { parseExcel, downloadTemplate } from '../utils/excelParser';
 
@@ -69,14 +69,35 @@ const MatchRow: React.FC<{
     const tA = teams.find(t => t.id === teamAId);
     const tB = teams.find(t => t.id === teamBId);
 
-    // Logic: Lọc danh sách đội thắng để đưa lên đầu cho dễ chọn ở vòng Knockout
-    const sortedTeamsForKnockout = [...teams].sort((a, b) => {
-        const isWinnerA = allMatches.some(m => !m.groupId && m.winnerId === a.id);
-        const isWinnerB = allMatches.some(m => !m.groupId && m.winnerId === b.id);
-        if (isWinnerA && !isWinnerB) return -1;
-        if (!isWinnerA && isWinnerB) return 1;
-        return a.name1.localeCompare(b.name1);
-    });
+    // Tách đội thành 2 nhóm: Nhóm đã thắng knockout và nhóm còn lại
+    const winningTeams = teams.filter(t => allMatches.some(m => !m.groupId && m.winnerId === t.id));
+    const otherTeams = teams.filter(t => !winningTeams.some(wt => wt.id === t.id)).sort((a,b) => a.name1.localeCompare(b.name1));
+
+    const TeamSelect = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label: string }) => (
+        <select 
+            className="flex-1 text-[10px] border border-slate-200 rounded p-1.5 outline-none font-bold bg-white focus:ring-2 focus:ring-blue-100" 
+            value={value} 
+            onChange={e => onChange(e.target.value)}
+        >
+            <option value="">-- {label} --</option>
+            {winningTeams.length > 0 && (
+                <optgroup label="🏆 ĐỘI THẮNG VÒNG TRƯỚC">
+                    {winningTeams.map(t => (
+                        <option key={t.id} value={t.id}>
+                            ✅ {t.name1} & {t.name2} ({t.org})
+                        </option>
+                    ))}
+                </optgroup>
+            )}
+            <optgroup label="👥 TẤT CẢ ĐỘI">
+                {otherTeams.map(t => (
+                    <option key={t.id} value={t.id}>
+                        {t.name1} & {t.name2} ({t.org})
+                    </option>
+                ))}
+            </optgroup>
+        </select>
+    );
 
     const ScoreInput = ({ s, side }: { s: keyof MatchScore, side: 'a' | 'b' }) => (
         <input 
@@ -103,18 +124,8 @@ const MatchRow: React.FC<{
             {/* Đội A */}
             <td className={`p-1 border-r w-[25%] ${match.winnerId === teamAId ? 'bg-green-100/50' : ''}`}>
                 <div className="flex items-center gap-2">
-                    {!match.groupId ? ( // Knockout selects
-                        <select className="flex-1 text-[9px] border border-slate-200 rounded p-1 outline-none font-bold bg-white" value={teamAId} onChange={e => setTeamAId(e.target.value)}>
-                            <option value="">-- Chọn Đội A --</option>
-                            {sortedTeamsForKnockout.map(t => {
-                                const isWinner = allMatches.some(m => !m.groupId && m.winnerId === t.id);
-                                return (
-                                    <option key={t.id} value={t.id}>
-                                        {isWinner ? '🏆 ' : ''}{t.name1} & {t.name2} ({t.org})
-                                    </option>
-                                );
-                            })}
-                        </select>
+                    {!match.groupId ? (
+                        <TeamSelect value={teamAId} onChange={setTeamAId} label="Chọn Đội A" />
                     ) : (
                         <div className="flex-1 min-w-0 text-right">
                             <div className="text-[10px] font-black text-slate-800 truncate">{tA?.name1} & {tA?.name2}</div>
@@ -123,7 +134,7 @@ const MatchRow: React.FC<{
                     )}
                     <button 
                         onClick={() => onUpdate({ ...match, winnerId: match.winnerId === teamAId ? null : teamAId, isFinished: match.winnerId !== teamAId })}
-                        className={`shrink-0 w-5 h-5 flex items-center justify-center rounded border ${match.winnerId === teamAId ? 'bg-green-600 text-white border-green-700 shadow-sm' : 'bg-white text-slate-200 border-slate-200'}`}
+                        className={`shrink-0 w-5 h-5 flex items-center justify-center rounded border ${match.winnerId === teamAId ? 'bg-green-600 text-white border-green-700 shadow-sm' : 'bg-white text-slate-200 border-slate-200 hover:border-slate-400'}`}
                     >
                         <Star size={10} fill={match.winnerId === teamAId ? "currentColor" : "none"} />
                     </button>
@@ -160,22 +171,12 @@ const MatchRow: React.FC<{
                 <div className="flex items-center gap-2">
                     <button 
                         onClick={() => onUpdate({ ...match, winnerId: match.winnerId === teamBId ? null : teamBId, isFinished: match.winnerId !== teamBId })}
-                        className={`shrink-0 w-5 h-5 flex items-center justify-center rounded border ${match.winnerId === teamBId ? 'bg-green-600 text-white border-green-700 shadow-sm' : 'bg-white text-slate-200 border-slate-200'}`}
+                        className={`shrink-0 w-5 h-5 flex items-center justify-center rounded border ${match.winnerId === teamBId ? 'bg-green-600 text-white border-green-700 shadow-sm' : 'bg-white text-slate-200 border-slate-200 hover:border-slate-400'}`}
                     >
                         <Star size={10} fill={match.winnerId === teamBId ? "currentColor" : "none"} />
                     </button>
                     {!match.groupId ? (
-                        <select className="flex-1 text-[9px] border border-slate-200 rounded p-1 outline-none font-bold bg-white" value={teamBId} onChange={e => setTeamBId(e.target.value)}>
-                            <option value="">-- Chọn Đội B --</option>
-                            {sortedTeamsForKnockout.map(t => {
-                                const isWinner = allMatches.some(m => !m.groupId && m.winnerId === t.id);
-                                return (
-                                    <option key={t.id} value={t.id}>
-                                        {isWinner ? '🏆 ' : ''}{t.name1} & {t.name2} ({t.org})
-                                    </option>
-                                );
-                            })}
-                        </select>
+                        <TeamSelect value={teamBId} onChange={setTeamBId} label="Chọn Đội B" />
                     ) : (
                         <div className="flex-1 min-w-0 text-left">
                             <div className="text-[10px] font-black text-slate-800 truncate">{tB?.name1} & {tB?.name2}</div>
