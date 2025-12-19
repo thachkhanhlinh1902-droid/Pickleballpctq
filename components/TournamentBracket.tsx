@@ -148,7 +148,7 @@ export const TournamentBracket: React.FC<Props> = ({ matches, teams }) => {
                     <BracketMatch match={ck} teams={teams} isFinal={true} />
                     {ck?.isFinished && (
                         <div className="mt-8 text-center animate-bounce bg-slate-900 border border-yellow-500 text-yellow-400 px-6 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-2xl ring-4 ring-yellow-400/20">
-                            CHAMPIONS 2024
+                            VÔ ĐỊCH
                         </div>
                     )}
                 </div>

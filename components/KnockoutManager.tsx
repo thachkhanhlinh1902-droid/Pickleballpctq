@@ -95,12 +95,13 @@ export const KnockoutManager: React.FC<Props> = ({ categoryData }) => {
 
         /**
          * SẮP XẾP CHỐNG TÁI ĐẤU (4 BẢNG):
-         * Nhánh 1 (Top): TK1 + TK2 -> BK1
-         * Nhánh 2 (Bottom): TK3 + TK4 -> BK2
+         * Đã hoán đổi vị trí trận 2 và 3 (TK2 <=> TK3)
+         * Nhánh 1: TK1 + TK2
+         * Nhánh 2: TK3 + TK4
          */
         createOrUpdate('TK1', 'Tứ kết 1 (1A-2D)', rA[0] || null, tD2 || null, 1);
-        createOrUpdate('TK2', 'Tứ kết 2 (1C-2B)', rC[0] || null, tB2 || null, 2);
-        createOrUpdate('TK3', 'Tứ kết 3 (1D-2A)', tD1 || null, rA[1] || null, 3);
+        createOrUpdate('TK2', 'Tứ kết 2 (1D-2A)', tD1 || null, rA[1] || null, 2); // Đổi 3 thành 2
+        createOrUpdate('TK3', 'Tứ kết 3 (1C-2B)', rC[0] || null, tB2 || null, 3); // Đổi 2 thành 3
         createOrUpdate('TK4', 'Tứ kết 4 (1B-2C)', tB1 || null, rC[1] || null, 4);
         
         createOrUpdate('BK1', 'Bán kết 1', null, null, 5); 
